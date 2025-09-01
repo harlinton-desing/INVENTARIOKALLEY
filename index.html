@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Inventario Gamer App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+body { background: #0a0f1c; color: #fff; font-family: "Segoe UI", sans-serif; }
+.nav-link { color: #003cff !important; font-weight: 500; }
+.card { background: #111a2b; border-radius: 12px; }
+h3, h4, h5 { color: #00d9ff; }
+input, select, textarea { background: #0f1628 !important; color: #fff !important; border: 1px solid #00d9ff55; }
+::placeholder { color: #fff !important; opacity: 0.8; }
+table { color: #fff; }
+.btn-info { background: linear-gradient(90deg,#00d9ff,#6f00ff); border: none; }
+.logo { width: 60px; margin-right: 10px; }
+.header-app { display:flex; align-items:center; justify-content:center; margin-bottom:15px; flex-wrap: wrap; }
+.card-azul { background: linear-gradient(135deg,#0044ff,#0a0a0a); }
+.card-violeta { background: linear-gradient(135deg,#6f00ff,#030303); }
+.card-verde { background: linear-gradient(135deg,#009933,#070707); }
+.card-rojo { background: linear-gradient(135deg,#ff0033,#070707); }
+.btn-eliminar { background: #ff0033; color: #fff; border: none; }
+</style>
+</head>
+<body>
+<div class="container py-3">
+  <div class="header-app">
+    <img src="https://img.icons8.com/fluency/96/controller.png" class="logo" alt="Logo">
+    <h3>Inventario Gamer App</h3>
+  </div>
+
+  <!-- Menú -->
+  <ul class="nav nav-tabs" id="tabsMenu">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#dashboard">Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#clientes">Clientes</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#inventario">Inventario</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ventas">Ventas</a></li>
+  </ul>
+
+  <div class="tab-content mt-3">
+
+    <!-- DASHBOARD -->
+    <div class="tab-pane fade show active" id="dashboard">
+      <div class="row g-2 mb-3">
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="card p-2 text-center card-azul text-white">
+            <h6>Total vendido</h6>
+            <h4 id="totalVendido" style="color:#00ffea;font-weight:bold;">$0</h4>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="card p-2 text-center card-violeta text-white">
+            <h6>Meta (COP)</h6>
+            <input type="number" id="metaInput" class="form-control text-center mb-2 w-100" placeholder="Meta mensual">
+            <button class="btn btn-light btn-sm w-100" onclick="guardarMeta()">Guardar</button>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="card p-2 text-center card-verde text-white">
+            <h6>Cumplimiento</h6>
+            <h4 id="cumplimiento" style="color:#00ff66;font-weight:bold;">0%</h4>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="card p-2 text-center card-rojo text-white">
+            <h6>Faltante</h6>
+            <h4 id="faltante" style="color:#ff4444;font-weight:bold;">$0</h4>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-2 d-flex flex-wrap gap-2">
+        <button class="btn btn-info btn-sm flex-grow-1" onclick="exportPDFInventario()">PDF Inventario</button>
+        <button class="btn btn-info btn-sm flex-grow-1" onclick="exportPDFCumplimiento()">PDF Cumplimiento</button>
+        <button class="btn btn-info btn-sm flex-grow-1" onclick="exportarClientesExcel()">Exportar Clientes</button>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <canvas id="ventasDia" class="w-100"></canvas>
+        </div>
+        <div class="col-12 col-md-6">
+          <canvas id="ventasProducto" class="w-100"></canvas>
+        </div>
+        <div class="col-12">
+          <canvas id="cumplimientoChart" class="w-100"></canvas>
+        </div>
+      </div>
+
+      <div class="card p-3 mt-4">
+        <h5>Ventas por equipo</h5>
+        <select id="filtroEquipo" class="form-control mb-2 w-100" onchange="filtrarVentasEquipo()">
+          <option value="todos">Todos</option>
+          <option value="dia">Hoy</option>
+          <option value="semana">Esta semana</option>
+          <option value="mes">Este mes</option>
+          <option value="anio">Este año</option>
+        </select>
+        <canvas id="ventasEquipo" class="w-100"></canvas>
+        <div class="table-responsive mt-3">
+          <table class="table table-dark table-striped" id="tablaVentasEquipo">
+            <thead><tr><th>Imagen</th><th>Referencia</th><th>Cantidad vendida</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="tab-pane fade" id="clientes">
+      <h5>Lista de clientes</h5>
+      <div class="table-responsive">
+        <table class="table table-dark table-striped">
+          <thead><tr><th>Nombre</th><th>Celular</th><th>Producto</th><th>Foto</th><th>Acción</th></tr></thead>
+          <tbody id="tablaClientes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <div class="tab-pane fade" id="inventario">
+      <div class="card p-3 mb-3">
+        <h5>Agregar nuevo producto</h5>
+        <input type="text" id="productoNombre" class="form-control mb-2 w-100" placeholder="Nombre del producto">
+        <input type="number" id="productoPrecio" class="form-control mb-2 w-100" placeholder="Precio">
+        <input type="number" id="productoCantidad" class="form-control mb-2 w-100" placeholder="Cantidad">
+        <input type="file" id="productoFoto" class="form-control mb-2 w-100">
+        <button class="btn btn-info w-100" onclick="agregarProducto()">Agregar</button>
+      </div>
+      <div class="card p-3 mb-3">
+        <h5>Agregar cantidad a producto existente</h5>
+        <select id="productoExistente" class="form-control mb-2 w-100"></select>
+        <input type="number" id="cantidadExtra" class="form-control mb-2 w-100" placeholder="Cantidad a añadir">
+        <button class="btn btn-info w-100" onclick="agregarCantidadExistente()">Agregar cantidad</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-dark table-striped">
+          <thead><tr><th>Foto</th><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Acciones</th></tr></thead>
+          <tbody id="tablaInventario"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VENTAS -->
+    <div class="tab-pane fade" id="ventas">
+      <div class="card p-3 mb-3">
+        <h5>Registrar venta</h5>
+        <input type="text" id="ventaCliente" class="form-control mb-2 w-100" placeholder="Nombre del cliente">
+        <input type="text" id="ventaCelular" class="form-control mb-2 w-100" placeholder="Celular">
+        <select id="ventaProducto" class="form-control mb-2 w-100"></select>
+        <input type="number" id="ventaCantidad" class="form-control mb-2 w-100" placeholder="Cantidad">
+        <button class="btn btn-info w-100" onclick="registrarVenta()">Registrar</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-dark table-striped">
+          <thead><tr><th>Foto</th><th>Producto</th><th>Cliente</th><th>Cantidad</th><th>Total</th><th>Fecha</th><th>Acción</th></tr></thead>
+          <tbody id="tablaVentas"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let inventario = JSON.parse(localStorage.getItem("inventario")) || [];
+let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+let meta = parseInt(localStorage.getItem("meta")) || 0;
+let chartVentasEquipo;
+
+// Guardar meta
+function guardarMeta(){ meta = parseInt(document.getElementById("metaInput").value)||0; localStorage.setItem("meta",meta); actualizarDashboard(); }
+
+// Agregar producto nuevo
+function agregarProducto(){
+  let nombre = document.getElementById("productoNombre").value;
+  let precio = parseInt(document.getElementById("productoPrecio").value);
+  let cantidad = parseInt(document.getElementById("productoCantidad").value);
+  let foto = document.getElementById("productoFoto").files[0];
+  if(!nombre || !precio || !cantidad || !foto){ return alert("Todos los campos son obligatorios"); }
+  let reader = new FileReader();
+  reader.onload = function(e){
+    inventario.push({nombre, precio, cantidad, foto:e.target.result});
+    localStorage.setItem("inventario",JSON.stringify(inventario));
+    mostrarInventario(); cargarProductosVenta();
+  };
+  reader.readAsDataURL(foto);
+}
+
+// Agregar cantidad a producto existente
+function agregarCantidadExistente(){
+  let idx = parseInt(document.getElementById("productoExistente").value);
+  let cantidad = parseInt(document.getElementById("cantidadExtra").value);
+  if(isNaN(idx) || isNaN(cantidad) || cantidad<=0) return alert("Selecciona producto y cantidad válida");
+  inventario[idx].cantidad += cantidad;
+  localStorage.setItem("inventario",JSON.stringify(inventario));
+  mostrarInventario();
+  cargarProductosVenta();
+}
+
+// Mostrar inventario
+function mostrarInventario(){
+  let tabla = document.getElementById("tablaInventario"); tabla.innerHTML="";
+  let selectExistente = document.getElementById("productoExistente"); selectExistente.innerHTML="";
+  inventario.forEach((p,i)=>{
+    tabla.innerHTML += `<tr>
+      <td><img src="${p.foto}" width="40"></td>
+      <td>${p.nombre}</td>
+      <td>$${p.precio}</td>
+      <td>${p.cantidad}</td>
+      <td><button class="btn btn-eliminar btn-sm" onclick="eliminarProducto(${i})">Eliminar</button></td>
+    </tr>`;
+    selectExistente.innerHTML += `<option value="${i}">${p.nombre} (Stock: ${p.cantidad})</option>`;
+  });
+}
+
+// Eliminar producto
+function eliminarProducto(i){ inventario.splice(i,1); localStorage.setItem("inventario",JSON.stringify(inventario)); mostrarInventario(); cargarProductosVenta(); }
+
+// Cargar productos para ventas
+function cargarProductosVenta(){
+  let select = document.getElementById("ventaProducto"); select.innerHTML="";
+  inventario.forEach((p,i)=>{ if(p.cantidad>0) select.innerHTML+=`<option value="${i}">${p.nombre}</option>`; });
+}
+
+// Registrar venta
+function registrarVenta(){
+  let cliente = document.getElementById("ventaCliente").value;
+  let celular = document.getElementById("ventaCelular").value;
+  let i = parseInt(document.getElementById("ventaProducto").value);
+  let cantidad = parseInt(document.getElementById("ventaCantidad").value);
+  if(!inventario[i] || cantidad>inventario[i].cantidad) return alert("Cantidad no disponible");
+  let total = cantidad*inventario[i].precio;
+  let venta = {producto:inventario[i].nombre,foto:inventario[i].foto,cliente,celular,cantidad,total,fecha:new Date().toLocaleDateString()};
+  ventas.push(venta);
+  clientes.push({nombre:cliente,celular,producto:inventario[i].nombre,foto:inventario[i].foto});
+  inventario[i].cantidad -= cantidad;
+  localStorage.setItem("inventario",JSON.stringify(inventario));
+  localStorage.setItem("ventas",JSON.stringify(ventas));
+  localStorage.setItem("clientes",JSON.stringify(clientes));
+  mostrarVentas(); mostrarInventario(); mostrarClientes(); actualizarDashboard(); filtrarVentasEquipo();
+}
+
+// Mostrar ventas
+function mostrarVentas(){
+  let tabla = document.getElementById("tablaVentas"); tabla.innerHTML="";
+  ventas.forEach((v,i)=>{
+    tabla.innerHTML += `<tr>
+      <td><img src="${v.foto}" width="40"></td>
+      <td>${v.producto}</td>
+      <td>${v.cliente}</td>
+      <td>${v.cantidad}</td>
+      <td>$${v.total}</td>
+      <td>${v.fecha}</td>
+      <td><button class="btn btn-eliminar btn-sm" onclick="eliminarVenta(${i})">Eliminar</button></td>
+    </tr>`;
+  });
+}
+
+// Eliminar venta
+function eliminarVenta(i){ ventas.splice(i,1); localStorage.setItem("ventas",JSON.stringify(ventas)); mostrarVentas(); actualizarDashboard(); filtrarVentasEquipo(); }
+
+// Mostrar clientes
+function mostrarClientes(){
+  let tabla = document.getElementById("tablaClientes"); tabla.innerHTML="";
+  clientes.forEach((c,i)=>{
+    tabla.innerHTML += `<tr>
+      <td>${c.nombre}</td><td>${c.celular}</td><td>${c.producto}</td>
+      <td><img src="${c.foto}" width="40"></td>
+      <td><button class="btn btn-eliminar btn-sm" onclick="eliminarCliente(${i})">Eliminar</button></td>
+    </tr>`;
+  });
+}
+
+// Eliminar cliente
+function eliminarCliente(i){ clientes.splice(i,1); localStorage.setItem("clientes",JSON.stringify(clientes)); mostrarClientes(); }
+
+// Dashboard
+function actualizarDashboard(){
+  let total = ventas.reduce((a,b)=>a+b.total,0);
+  document.getElementById("totalVendido").innerText="$"+total;
+  document.getElementById("metaInput").value = meta||"";
+  let cumplimiento = meta?Math.round((total/meta)*100):0;
+  document.getElementById("cumplimiento").innerText= cumplimiento+"%";
+  document.getElementById("faltante").innerText="$"+(meta-total);
+  graficar();
+}
+
+// Graficas
+function graficar(){
+  new Chart(document.getElementById("ventasDia"),{type:"bar",data:{labels:ventas.map(v=>v.fecha),datasets:[{label:"Ventas",data:ventas.map(v=>v.total),backgroundColor:"#00d9ff"}]}});
+  new Chart(document.getElementById("ventasProducto"),{type:"pie",data:{labels:[...new Set(ventas.map(v=>v.producto))],datasets:[{data:[...new Set(ventas.map(v=>v.producto))].map(p=>ventas.filter(v=>v.producto==p).reduce((a,b)=>a+b.total,0)),backgroundColor:["#00d9ff","#6f00ff","#00ff99","#ff0033"]}]}}); 
+  new Chart(document.getElementById("cumplimientoChart"),{type:"line",data:{labels:ventas.map(v=>v.fecha),datasets:[{label:"Ventas acumuladas",data:ventas.map((v,i)=>ventas.slice(0,i+1).reduce((a,b)=>a+b.total,0)),borderColor:"#00d9ff",fill:false},{label:"Meta",data:ventas.map(v=>meta),borderColor:"#ff00ff",borderDash:[5,5],fill:false}]}}); 
+}
+
+// Ventas por equipo
+function filtrarVentasEquipo(){
+  let filtro = document.getElementById("filtroEquipo").value;
+  let hoy = new Date();
+  let filtradas = ventas.filter(v=>{
+    let fecha = new Date(v.fecha);
+    if(filtro==="dia") return fecha.toDateString()===hoy.toDateString();
+    if(filtro==="semana"){ let start = new Date(hoy); start.setDate(hoy.getDate()-7); return fecha>=start && fecha<=hoy; }
+    if(filtro==="mes") return fecha.getMonth()===hoy.getMonth() && fecha.getFullYear()===hoy.getFullYear();
+    if(filtro==="anio") return fecha.getFullYear()===hoy.getFullYear();
+    return true;
+  });
+  actualizarGraficoEquipo(filtradas);
+}
+
+function actualizarGraficoEquipo(data){
+  let productos = [...new Set(data.map(v=>v.producto))];
+  let totales = productos.map(p=>data.filter(v=>v.producto===p).reduce((a,b)=>a+b.total,0));
+
+  if(chartVentasEquipo) chartVentasEquipo.destroy();
+  chartVentasEquipo = new Chart(document.getElementById("ventasEquipo"),{
+    type:"bar",
+    data:{ labels:productos, datasets:[{ label:"Ventas por equipo (COP)", data:totales, backgroundColor:["#00d9ff","#6f00ff","#00ff66","#ff4444","#ffaa00"] }] },
+    options:{ responsive:true, plugins:{legend:{display:false}} }
+  });
+
+  let tabla = document.querySelector("#tablaVentasEquipo tbody");
+  tabla.innerHTML="";
+  productos.forEach(prod=>{
+    let cantidad = data.filter(v=>v.producto===prod).reduce((a,b)=>a+b.cantidad,0);
+    let foto = data.find(v=>v.producto===prod).foto;
+    tabla.innerHTML += `<tr>
+      <td><img src="${foto}" width="40"></td>
+      <td>${prod}</td>
+      <td>${cantidad}</td>
+    </tr>`;
+  });
+}
+
+// Exportar
+function exportPDFInventario(){ const {jsPDF}=window.jspdf; let doc=new jsPDF(); doc.text("Inventario",10,10); inventario.forEach((p,i)=>{ doc.text(`${p.nombre} - $${p.precio} - Cant: ${p.cantidad}`,10,20+i*10); }); doc.save("inventario.pdf"); }
+function exportPDFCumplimiento(){ const {jsPDF}=window.jspdf; let doc=new jsPDF(); doc.text("Cumplimiento",10,10); let total=ventas.reduce((acc,v)=>acc+v.total,0); let cumplimiento=meta?Math.round((total/meta)*100):0; doc.text(`Meta: $${meta}`,10,20); doc.text(`Total vendido: $${total}`,10,30); doc.text(`Cumplimiento: ${cumplimiento}%`,10,40); doc.save("cumplimiento.pdf"); }
+function exportarClientesExcel(){ let ws=XLSX.utils.json_to_sheet(clientes.map(c=>({Nombre:c.nombre,Celular:c.celular,Producto:c.producto}))); let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Clientes"); XLSX.writeFile(wb,"clientes.xlsx"); }
+
+// Inicialización
+mostrarInventario(); mostrarVentas(); mostrarClientes(); cargarProductosVenta(); actualizarDashboard(); filtrarVentasEquipo();
+</script>
+</body>
+</html>
