@@ -27,10 +27,26 @@ table { color: #fff; }
 </style>
 </head>
 <body>
+
+<!-- Modal de Bienvenida -->
+<!-- Modal de Bienvenida Fullscreen -->
+<div class="modal fade" id="modalBienvenida" tabindex="-1" aria-labelledby="modalBienvenidaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen">
+    <div class="modal-content" style="background:#0a0f1c; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+      <h1 class="mb-4" style="color:#00d9ff;">¡Bienvenido Harlinton!</h1>
+      <img src="imagen/logo.png" alt="Bienvenido" class="mb-4">
+      <p style="font-size:1.2rem;">Prepárate para gestionar tu inventario KALLEY de manera eficiente.</p>
+      <button type="button" class="btn btn-info btn-lg mt-4" data-bs-dismiss="modal">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="container py-3">
+  <!-- Logo -->
   <div class="header-app">
-    <img src="https://img.icons8.com/fluency/96/controller.png" class="logo" alt="Logo">
-    <h3>Inventario Gamer App</h3>
+    <img src="imagen/logo.png" class="logo" alt="Logo">
+    <h3>Inventario KALLEY</h3>
   </div>
 
   <!-- Menú -->
@@ -134,12 +150,12 @@ table { color: #fff; }
       <div class="card p-3 mb-3">
         <h5>Agregar cantidad a producto existente</h5>
         <select id="productoExistente" class="form-control mb-2 w-100"></select>
-        <input type="number" id="cantidadExtra" class="form-control mb-2 w-100" placeholder="Cantidad a añadir">
+        <input type="number" id="cantidadExtra" class="form-control mb-2 w-100" placeholder="Cantidad a agregar">
         <button class="btn btn-info w-100" onclick="agregarCantidadExistente()">Agregar cantidad</button>
       </div>
       <div class="table-responsive">
         <table class="table table-dark table-striped">
-          <thead><tr><th>Foto</th><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Foto</th><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Acción</th></tr></thead>
           <tbody id="tablaInventario"></tbody>
         </table>
       </div>
@@ -168,16 +184,20 @@ table { color: #fff; }
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// --- Variables ---
 let inventario = JSON.parse(localStorage.getItem("inventario")) || [];
 let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
 let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
 let meta = parseInt(localStorage.getItem("meta")) || 0;
 let chartVentasEquipo;
 
-// Guardar meta
-function guardarMeta(){ meta = parseInt(document.getElementById("metaInput").value)||0; localStorage.setItem("meta",meta); actualizarDashboard(); }
+// --- Modal bienvenida ---
+window.addEventListener('DOMContentLoaded', () => {
+  let modal = new bootstrap.Modal(document.getElementById('modalBienvenida'));
+  modal.show();
+});
 
-// Agregar producto nuevo
+// --- Inventario ---
 function agregarProducto(){
   let nombre = document.getElementById("productoNombre").value;
   let precio = parseInt(document.getElementById("productoPrecio").value);
@@ -193,18 +213,15 @@ function agregarProducto(){
   reader.readAsDataURL(foto);
 }
 
-// Agregar cantidad a producto existente
 function agregarCantidadExistente(){
   let idx = parseInt(document.getElementById("productoExistente").value);
   let cantidad = parseInt(document.getElementById("cantidadExtra").value);
   if(isNaN(idx) || isNaN(cantidad) || cantidad<=0) return alert("Selecciona producto y cantidad válida");
   inventario[idx].cantidad += cantidad;
   localStorage.setItem("inventario",JSON.stringify(inventario));
-  mostrarInventario();
-  cargarProductosVenta();
+  mostrarInventario(); cargarProductosVenta();
 }
 
-// Mostrar inventario
 function mostrarInventario(){
   let tabla = document.getElementById("tablaInventario"); tabla.innerHTML="";
   let selectExistente = document.getElementById("productoExistente"); selectExistente.innerHTML="";
@@ -220,16 +237,10 @@ function mostrarInventario(){
   });
 }
 
-// Eliminar producto
 function eliminarProducto(i){ inventario.splice(i,1); localStorage.setItem("inventario",JSON.stringify(inventario)); mostrarInventario(); cargarProductosVenta(); }
+function cargarProductosVenta(){ let select = document.getElementById("ventaProducto"); select.innerHTML=""; inventario.forEach((p,i)=>{ if(p.cantidad>0) select.innerHTML+=`<option value="${i}">${p.nombre}</option>`; }); }
 
-// Cargar productos para ventas
-function cargarProductosVenta(){
-  let select = document.getElementById("ventaProducto"); select.innerHTML="";
-  inventario.forEach((p,i)=>{ if(p.cantidad>0) select.innerHTML+=`<option value="${i}">${p.nombre}</option>`; });
-}
-
-// Registrar venta
+// --- Ventas ---
 function registrarVenta(){
   let cliente = document.getElementById("ventaCliente").value;
   let celular = document.getElementById("ventaCelular").value;
@@ -247,7 +258,6 @@ function registrarVenta(){
   mostrarVentas(); mostrarInventario(); mostrarClientes(); actualizarDashboard(); filtrarVentasEquipo();
 }
 
-// Mostrar ventas
 function mostrarVentas(){
   let tabla = document.getElementById("tablaVentas"); tabla.innerHTML="";
   ventas.forEach((v,i)=>{
@@ -263,10 +273,9 @@ function mostrarVentas(){
   });
 }
 
-// Eliminar venta
 function eliminarVenta(i){ ventas.splice(i,1); localStorage.setItem("ventas",JSON.stringify(ventas)); mostrarVentas(); actualizarDashboard(); filtrarVentasEquipo(); }
 
-// Mostrar clientes
+// --- Clientes ---
 function mostrarClientes(){
   let tabla = document.getElementById("tablaClientes"); tabla.innerHTML="";
   clientes.forEach((c,i)=>{
@@ -278,10 +287,10 @@ function mostrarClientes(){
   });
 }
 
-// Eliminar cliente
 function eliminarCliente(i){ clientes.splice(i,1); localStorage.setItem("clientes",JSON.stringify(clientes)); mostrarClientes(); }
 
-// Dashboard
+// --- Dashboard ---
+function guardarMeta(){ meta=document.getElementById("metaInput").value; localStorage.setItem("meta",meta); actualizarDashboard(); }
 function actualizarDashboard(){
   let total = ventas.reduce((a,b)=>a+b.total,0);
   document.getElementById("totalVendido").innerText="$"+total;
@@ -292,14 +301,13 @@ function actualizarDashboard(){
   graficar();
 }
 
-// Graficas
 function graficar(){
   new Chart(document.getElementById("ventasDia"),{type:"bar",data:{labels:ventas.map(v=>v.fecha),datasets:[{label:"Ventas",data:ventas.map(v=>v.total),backgroundColor:"#00d9ff"}]}});
   new Chart(document.getElementById("ventasProducto"),{type:"pie",data:{labels:[...new Set(ventas.map(v=>v.producto))],datasets:[{data:[...new Set(ventas.map(v=>v.producto))].map(p=>ventas.filter(v=>v.producto==p).reduce((a,b)=>a+b.total,0)),backgroundColor:["#00d9ff","#6f00ff","#00ff99","#ff0033"]}]}}); 
   new Chart(document.getElementById("cumplimientoChart"),{type:"line",data:{labels:ventas.map(v=>v.fecha),datasets:[{label:"Ventas acumuladas",data:ventas.map((v,i)=>ventas.slice(0,i+1).reduce((a,b)=>a+b.total,0)),borderColor:"#00d9ff",fill:false},{label:"Meta",data:ventas.map(v=>meta),borderColor:"#ff00ff",borderDash:[5,5],fill:false}]}}); 
 }
 
-// Ventas por equipo
+// --- Ventas por equipo ---
 function filtrarVentasEquipo(){
   let filtro = document.getElementById("filtroEquipo").value;
   let hoy = new Date();
@@ -338,12 +346,12 @@ function actualizarGraficoEquipo(data){
   });
 }
 
-// Exportar
+// --- Exportar ---
 function exportPDFInventario(){ const {jsPDF}=window.jspdf; let doc=new jsPDF(); doc.text("Inventario",10,10); inventario.forEach((p,i)=>{ doc.text(`${p.nombre} - $${p.precio} - Cant: ${p.cantidad}`,10,20+i*10); }); doc.save("inventario.pdf"); }
 function exportPDFCumplimiento(){ const {jsPDF}=window.jspdf; let doc=new jsPDF(); doc.text("Cumplimiento",10,10); let total=ventas.reduce((acc,v)=>acc+v.total,0); let cumplimiento=meta?Math.round((total/meta)*100):0; doc.text(`Meta: $${meta}`,10,20); doc.text(`Total vendido: $${total}`,10,30); doc.text(`Cumplimiento: ${cumplimiento}%`,10,40); doc.save("cumplimiento.pdf"); }
 function exportarClientesExcel(){ let ws=XLSX.utils.json_to_sheet(clientes.map(c=>({Nombre:c.nombre,Celular:c.celular,Producto:c.producto}))); let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Clientes"); XLSX.writeFile(wb,"clientes.xlsx"); }
 
-// Inicialización
+// --- Inicialización ---
 mostrarInventario(); mostrarVentas(); mostrarClientes(); cargarProductosVenta(); actualizarDashboard(); filtrarVentasEquipo();
 </script>
 </body>
