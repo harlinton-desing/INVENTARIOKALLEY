@@ -32,14 +32,23 @@ table { color: #fff; }
 <!-- Modal de Bienvenida Fullscreen -->
 <div class="modal fade" id="modalBienvenida" tabindex="-1" aria-labelledby="modalBienvenidaLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-fullscreen">
-    <div class="modal-content" style="background:#0a0f1c; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+    <div class="modal-content d-flex flex-column align-items-center justify-content-center text-center" style="background:#0a0f1c; color:#fff;">
+      
       <h1 class="mb-4" style="color:#00d9ff;">¡Bienvenido Harlinton!</h1>
-      <img src="imagen/logo.png" alt="Bienvenido" class="mb-4">
-      <p style="font-size:1.2rem;">Prepárate para gestionar tu inventario KALLEY de manera eficiente.</p>
+      
+      <!-- Imagen responsive -->
+      <img src="imagen/logo.png" 
+           alt="Bienvenido" 
+           class="img-fluid mb-4" 
+           style="max-width:250px; width:80%; height:auto;">
+      
+      <p style="font-size:1.2rem;">Prepárate para gestionar tu inventario gamer de manera eficiente.</p>
+      
       <button type="button" class="btn btn-info btn-lg mt-4" data-bs-dismiss="modal">Ingresar</button>
     </div>
   </div>
 </div>
+
 
 
 <div class="container py-3">
