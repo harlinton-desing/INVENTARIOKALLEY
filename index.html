@@ -24,6 +24,46 @@ body {
 .nav-link.active {
   color: #00d9ff !important;
 }
+.nav-tabs {
+  display: none !important;
+}
+.nav-tabs.show {
+  display: flex !important;
+  flex-direction: column;
+  background: rgba(17, 26, 43, 0.95);
+  backdrop-filter: blur(10px);
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  max-width: 90vw;
+  z-index: 1000;
+  border-radius: 10px;
+  border: 1px solid #00d9ff55;
+  border-top: none;
+  box-shadow: 0 8px 25px rgba(0, 217, 255, 0.3);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.nav-tabs.show .nav-item {
+  margin: 0;
+  border-bottom: 1px solid #00d9ff33;
+}
+.nav-tabs.show .nav-item:last-child {
+  border-bottom: none;
+}
+.nav-tabs.show .nav-link {
+  padding: 15px 20px;
+  color: #00d9ff !important;
+  text-align: center;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+.nav-tabs.show .nav-link:hover {
+  background: rgba(0, 217, 255, 0.1);
+  color: #fff !important;
+}
 .card {
   background: rgba(17, 26, 43, 0.9);
   border-radius: 12px;
@@ -88,6 +128,7 @@ table tbody tr:hover {
   margin-bottom: 15px;
   flex-wrap: wrap;
   padding: 10px;
+  position: relative;
 }
 .card-azul {
   background: linear-gradient(135deg, #0044ff, #0a0a0a);
@@ -108,7 +149,7 @@ table tbody tr:hover {
   font-size: 1.8rem;
   color: #00d9ff;
   cursor: pointer;
-  display: none;
+  display: block;
   transition: all 0.3s;
   padding: 5px 10px;
   border-radius: 5px;
@@ -154,47 +195,6 @@ canvas {
   background: #001133;
 }
 @media (max-width: 767px) {
-  .nav-tabs {
-    display: none !important;
-  }
-  .nav-tabs.show {
-    display: flex !important;
-    flex-direction: column;
-    background: rgba(17, 26, 43, 0.95);
-    backdrop-filter: blur(10px);
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    border-radius: 0 0 10px 10px;
-    border: 1px solid #00d9ff55;
-    border-top: none;
-    box-shadow: 0 4px 20px rgba(0, 217, 255, 0.3);
-  }
-  .nav-tabs.show .nav-item {
-    margin: 0;
-    border-bottom: 1px solid #00d9ff33;
-  }
-  .nav-tabs.show .nav-item:last-child {
-    border-bottom: none;
-  }
-  .nav-tabs.show .nav-link {
-    padding: 15px 20px;
-    color: #00d9ff !important;
-    text-align: center;
-    font-weight: 500;
-    transition: all 0.3s;
-  }
-  .nav-tabs.show .nav-link:hover {
-    background: rgba(0, 217, 255, 0.1);
-    color: #fff !important;
-  }
-  .menu-hamburguesa {
-    display: block !important;
-    position: relative;
-    z-index: 1001;
-  }
   .header-app {
     flex-direction: column;
     text-align: center;
@@ -239,9 +239,9 @@ canvas {
 
   <!-- Menú -->
   <ul class="nav nav-tabs justify-content-center" id="tabsMenu" role="navigation">
-    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#dashboard" onclick="closeMenuOnMobile()">Dashboard</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#clientes" onclick="closeMenuOnMobile()">Clientes</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#inventario" onclick="closeMenuOnMobile()">Inventario</a></li>
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#dashboard" onclick="closeMenuOnSelect()">Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#clientes" onclick="closeMenuOnSelect()">Clientes</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#inventario" onclick="closeMenuOnSelect()">Inventario</a></li>
   </ul>
 
   <div class="tab-content mt-3">
@@ -443,12 +443,14 @@ function handleMenuKey(event) {
   }
 }
 
-function closeMenuOnMobile() {
+function closeMenuOnSelect() {
   if (window.innerWidth <= 767) {
     const menu = document.getElementById("tabsMenu");
-    menu.classList.remove("show");
-    const hamburger = document.querySelector(".menu-hamburguesa");
-    hamburger.setAttribute("aria-expanded", "false");
+    if (menu.classList.contains("show")) {
+      menu.classList.remove("show");
+      const hamburger = document.querySelector(".menu-hamburguesa");
+      hamburger.setAttribute("aria-expanded", "false");
+    }
   }
 }
 
